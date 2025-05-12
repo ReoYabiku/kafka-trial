@@ -19,6 +19,7 @@ kubectl create -f ./deployment/strimzi.yaml -n kafka
 Kafkaのdeploymentを作成
 ```shell
 kubectl create -f ./deployment/kafka-single-node.yaml -n kafka
+kubectl wait kafka/my-cluster --for=condition=Ready --timeout=300s -n kafka
 ```
 
 Kafka Bridgeのserviceを作成
@@ -26,8 +27,8 @@ Kafka Bridgeのserviceを作成
 kubectl create -f ./service/kafka-bridge.yaml -n kafka
 ```
 
-### TODO
-
-- BFFから、 REST APIを通じてアクセスできるようになってるはず、、、
-  - https://my-bridge-bridge-service:8080
-  - Content-Type: application/vnd.kafka.v2+json
+BFFのdeployment, serviceを作成
+```shell
+kubectl create -f ./deployment/bff.yaml -n kafka
+kubectl expose deployment kafka-bff --type=LoadBalancer -n kafka
+```

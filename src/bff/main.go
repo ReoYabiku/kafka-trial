@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bff/kafka"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,6 +40,15 @@ func main() {
 		}
 
 		slog.Info("POST /reservation", "reservation", reservation)
+
+		kc := kafka.New()
+		err = kc.Send(res)
+		if err != nil {
+			slog.Error("failed to produce reservation message", "error", err.Error())
+			http.Error(w, "failed to produce reservation message", http.StatusInternalServerError)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, string(res))
 	})
