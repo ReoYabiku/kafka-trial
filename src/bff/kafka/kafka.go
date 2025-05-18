@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	endpoint    = "http://my-bridge-bridge-service:8080"
-	contentType = "application/vnd.kafka.v2+json"
+	endpoint = "http://my-bridge-bridge-service:8080"
+	// endpoint    = "http://localhost:3000"
+	contentType = "application/vnd.kafka.json.v2+json"
 	topic       = "reservation"
 )
 
@@ -22,12 +23,12 @@ type KafkaRecord struct {
 }
 
 type KafkaSendRequest struct {
-	Record []KafkaRecord `json:"record"`
+	Records []KafkaRecord `json:"records"`
 }
 
 type KafkaOffset struct {
-	Partition string `json:"partition"`
-	Offset    int    `json:"offset"`
+	Partition int `json:"partition"`
+	Offset    int `json:"offset"`
 }
 
 type KafkaSendResponse struct {
@@ -40,9 +41,9 @@ func New() *KafkaClient {
 	return &KafkaClient{}
 }
 
-func (kc *KafkaClient) Send(msg []byte) error {
+func (kc *KafkaClient) Send(msg []byte) (*KafkaSendResponse, error) {
 	body := KafkaSendRequest{
-		Record: []KafkaRecord{{
+		Records: []KafkaRecord{{
 			Key:   "key",
 			Value: string(msg),
 		}},
@@ -50,33 +51,37 @@ func (kc *KafkaClient) Send(msg []byte) error {
 
 	buf, err := json.Marshal(&body)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	slog.Debug("requestBody", "json", string(buf))
 
 	// TODO: ConfigSetからドメイン名を取得する
 	u, err := url.Parse(endpoint)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	resp, err := http.Post(u.JoinPath("topic", topic).String(), contentType, bytes.NewReader(buf))
+	resp, err := http.Post(u.JoinPath("topics", topic).String(), contentType, bytes.NewReader(buf))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	slog.Debug("topic", "body", respBody)
 
 	var kafkaOffsets KafkaSendResponse
 	err = json.Unmarshal(respBody, &kafkaOffsets)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	slog.Info("kafka send", "response", kafkaOffsets)
+	slog.Debug("kafka send", "response", kafkaOffsets)
 
-	return nil
+	return &kafkaOffsets, nil
 }

@@ -32,3 +32,8 @@ BFFのdeployment, serviceを作成
 kubectl create -f ./deployment/bff.yaml -n kafka
 kubectl expose deployment kafka-bff --type=LoadBalancer -n kafka
 ```
+
+topicの作成。BFFのPodから実行する
+```shell
+curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -d '{"topic_name": "reservation"}' http://my-bridge-bridge-service:8080/admin/topics
+```

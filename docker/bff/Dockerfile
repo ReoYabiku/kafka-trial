@@ -6,5 +6,6 @@ COPY ../../src/bff .
 RUN go build -o ./main ./main.go
 
 FROM alpine:3.21
+RUN apk add curl
 COPY --from=base /base/main /main
 CMD ["/main"]
