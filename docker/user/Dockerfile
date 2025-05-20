@@ -1,0 +1,11 @@
+FROM golang:1.24-alpine3.21 AS base
+WORKDIR /base
+COPY ../../src/user/go.mod .
+RUN go mod download
+COPY ../../src/user .
+RUN go build -o ./main ./main.go
+
+FROM alpine:3.21
+RUN apk add curl
+COPY --from=base /base/main /main
+CMD ["/main"]

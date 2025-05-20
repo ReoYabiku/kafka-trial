@@ -10,12 +10,6 @@ import (
 	"os"
 )
 
-type Reservation struct {
-	UserID    string `json:"user_id"`
-	EventID   string `json:"event_id"`
-	SeatCount int    `json:"seat_count"`
-}
-
 type ReservationResponse struct {
 	UserID    string `json:"user_id"`
 	EventID   string `json:"event_id"`
@@ -36,24 +30,17 @@ func main() {
 			return
 		}
 
-		var reservation Reservation
+		var reservation kafka.Reservation
 		if err := json.Unmarshal(body, &reservation); err != nil {
 			slog.Error("failed to unmarshal request body", "error", err.Error())
 			http.Error(w, "failed to unmarshal request body", http.StatusInternalServerError)
 			return
 		}
 
-		res, err := json.Marshal(&reservation)
-		if err != nil {
-			slog.Error("failed to unmarshal reservation", "error", err.Error())
-			http.Error(w, "failed to unmarchal reservation", http.StatusInternalServerError)
-			return
-		}
-
 		slog.Debug("POST /reservation", "reservation", reservation)
 
 		kc := kafka.New()
-		resp, err := kc.Send(res)
+		resp, err := kc.Send(&reservation)
 		if err != nil {
 			slog.Error("failed to produce reservation message", "error", err.Error())
 			http.Error(w, "failed to produce reservation message", http.StatusInternalServerError)

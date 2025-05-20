@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -15,6 +16,12 @@ const (
 	contentType = "application/vnd.kafka.json.v2+json"
 	topic       = "reservation"
 )
+
+type Reservation struct {
+	UserID    string `json:"user_id"`
+	EventID   string `json:"event_id"`
+	SeatCount int    `json:"seat_count"`
+}
 
 type KafkaRecord struct {
 	Key       string `json:"key,omitempty"`
@@ -41,11 +48,19 @@ func New() *KafkaClient {
 	return &KafkaClient{}
 }
 
-func (kc *KafkaClient) Send(msg []byte) (*KafkaSendResponse, error) {
+func (kc *KafkaClient) Send(reservation *Reservation) (*KafkaSendResponse, error) {
+	res, err := json.Marshal(&reservation)
+	if err != nil {
+		return nil, err
+	}
+	value := base64.StdEncoding.EncodeToString(res)
+
+	slog.Debug("encode", "value", value)
+
 	body := KafkaSendRequest{
 		Records: []KafkaRecord{{
 			Key:   "key",
-			Value: string(msg),
+			Value: value,
 		}},
 	}
 

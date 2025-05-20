@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-bff
+  name: kafka-user
   namespace: kafka
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kafka-bff
+      app: kafka-user
   template:
     metadata:
       labels:
-        app: kafka-bff
+        app: kafka-user
     spec:
       containers:
-        - image: public.ecr.aws/v1o5d7a8/kafka-app/bff:latest
-          name: kafka-bff
+        - image: public.ecr.aws/v1o5d7a8/kafka-app/user:latest
+          name: kafka-user
           ports:
-            - containerPort: 8080
+            - containerPort: 8081
               name: http
               protocol: TCP
