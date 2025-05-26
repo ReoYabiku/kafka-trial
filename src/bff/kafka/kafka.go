@@ -12,8 +12,7 @@ import (
 
 const (
 	endpoint = "http://my-bridge-bridge-service:8080"
-	// endpoint    = "http://localhost:3000"
-	contentType = "application/vnd.kafka.json.v2+json"
+	contentType = "application/vnd.kafka.binary.v2+json"
 	topic       = "reservation"
 )
 
