@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	endpoint = "http://my-bridge-bridge-service:8080"
-	groupId  = "my-group"
-	topic    = "reservation"
+	endpoint     = "http://my-bridge-bridge-service:8080"
+	acceptHeader = "application/vnd.kafka.binary.v2+json"
+	groupId      = "my-group"
+	consumer     = "consumer"
 )
 
 type Reservation struct {
@@ -36,13 +37,22 @@ func New() *KafkaClient {
 }
 
 func (kc *KafkaClient) Poll() ([]*Reservation, error) {
+	client := &http.Client{}
+
 	// TODO: ConfigSetからドメイン名を取得する
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := http.Get(u.JoinPath("consumers", groupId, "instances", topic, "records").String())
+	req, err := http.NewRequest("GET", u.JoinPath("consumers", groupId, "instances", consumer, "records").String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("accept", acceptHeader)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +78,9 @@ func (kc *KafkaClient) Poll() ([]*Reservation, error) {
 
 	var reservations []*Reservation
 
-	// TODO: base64エンコードされたキーをデコードする
 	for _, v := range pollResp {
+		slog.Debug("before decode", "value", v.Value)
+
 		decoded, err := base64.StdEncoding.DecodeString(v.Value)
 		if err != nil {
 			return nil, err

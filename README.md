@@ -27,6 +27,8 @@ Kafka Bridgeのserviceを作成
 kubectl create -f ./service/kafka-bridge.yaml -n kafka
 ```
 
+### アプリケーションの立ち上げ
+
 BFFのdeployment, serviceを作成
 ```shell
 kubectl create -f ./deployment/bff.yaml -n kafka
@@ -36,4 +38,29 @@ kubectl expose deployment kafka-bff --type=LoadBalancer -n kafka
 topicの作成。BFFのPodから実行する
 ```shell
 curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -d '{"topic_name": "reservation"}' http://my-bridge-bridge-service:8080/admin/topics
+```
+
+userのdeployment, serviceを作成
+```shell
+kubectl create -f ./deployment/user.yaml -n kafka
+kubectl expose deployment kafka-user --type=LoadBalancer -n kafka
+```
+
+consumerの作成。userのPodから実行する
+```shell
+curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -d '{"name": "consumer"}' \
+    http://my-bridge-bridge-service:8080/consumers/my-group
+curl -X POST -H "Content-Type: application/vnd.kafka.v2+json" -d '{"partitions": [{"topic": "reservation", "partition": 0}]}' \
+    http://my-bridge-bridge-service:8080/consumers/my-group/instances/consumer/assignments
+```
+
+## 使い方
+BFFにリクエストを送信する
+```shell
+curl -X POST -d '{"user_id": "user100", "event_id": "event100", "seat_count": 10}' http://localhost:8080/reservation
+```
+
+userで、メッセージを受信する
+```shell
+curl localhost:8081/user-info
 ```
